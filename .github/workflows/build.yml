@@ -1,34 +1,42 @@
-name: Build Android
+name: Build Android Final
 on:
   push:
     branches:
       - main
-  workflow_dispatch:
+      - master
+  workflow_dispatch: # Manuel başlat butonu
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: 🏗 Checkout projesi
-        uses: actions/checkout@v3
+      # 1. Kodları Çek
+      - name: 🏗 Checkout Repository
+        uses: actions/checkout@v4
 
-      - name: 🟢 Node.js kurulumu
-        uses: actions/setup-node@v3
+      # 2. Node.js Kur (Cache ayarını kapattık ki hata vermesin)
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: 18
-          # cache: 'npm'  <-- BU SATIRI SİLDİK VEYA BAŞINA # KOYDUK
 
-      - name: 📦 Kütüphaneleri yükle
+      # 3. Kütüphaneleri ve EAS CLI'yi Yükle
+      - name: 📦 Install Dependencies & EAS
         run: |
-          npm install --package-lock-only # Lock dosyası yoksa oluşturur
           npm install
+          npm install -g eas-cli
 
-      - name: 🛠 EAS CLI kurulumu
-        run: npm install -g eas-cli
-
-      - name: 🚀 Expo Build Başlat
-        run: |
-          eas init --id ${{ secrets.EXPO_PROJECT_ID }} --non-interactive
-          eas build --platform android --profile production --non-interactive
+      # 4. Expo Yapılandırması ve Build (Hata korumalı)
+      - name: 🚀 Configure & Build
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          EXPO_PROJECT_ID: ${{ secrets.EXPO_PROJECT_ID }}
+        run: |
+          echo "EAS CLI Version:"
+          npx eas-cli --version
+          
+          # Projeyi ID ile bağla (Zaten bağlıysa hata vermez, devam eder)
+          npx eas-cli init --id $EXPO_PROJECT_ID --non-interactive || true
+          
+          # Build işlemini başlat
+          npx eas-cli build --platform android --profile production --non-interactive
