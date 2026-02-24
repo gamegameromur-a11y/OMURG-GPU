@@ -2,8 +2,8 @@ name: Build Android
 on:
   push:
     branches:
-      - main  # Eğer ana dalın adı 'master' ise burayı master yap
-  workflow_dispatch: # Manuel başlatma butonunu açar
+      - main
+  workflow_dispatch:
 
 jobs:
   build:
@@ -16,19 +16,19 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 18
-          cache: 'npm'
+          # cache: 'npm'  <-- BU SATIRI SİLDİK VEYA BAŞINA # KOYDUK
 
-      - name: 📦 Kütüphaneleri yükle (npm install)
-        run: npm install
+      - name: 📦 Kütüphaneleri yükle
+        run: |
+          npm install --package-lock-only # Lock dosyası yoksa oluşturur
+          npm install
 
       - name: 🛠 EAS CLI kurulumu
         run: npm install -g eas-cli
 
       - name: 🚀 Expo Build Başlat
         run: |
-          # Önce projeyi bağla (ID hatasını çözer)
           eas init --id ${{ secrets.EXPO_PROJECT_ID }} --non-interactive
-          # Sonra derlemeyi başlat
           eas build --platform android --profile production --non-interactive
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
